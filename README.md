@@ -2,9 +2,18 @@
 
 A method for detecting pairwise interaction based on feature-based adaption of information theoretic metrics
 
+## Table of Contents
+- [Background](#background)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Simulating data](#simulating-data)
+  - [Reproducing figures](#reproducing-figures)
+- [Applying the method on a pair of time series](#applying-the-method-on-a-pair-of-time-series)
+
+
 ## Background
 
-This repository contains the code for the paper ["A feature-based information-theoretic approach for detecting interpretable, long-timescale pairwise interactions from time series"](arxiv.org/abs/2404.05929). Here we provide the code to reproduce the figures in the paper, as well as the R code to apply this method on a pair of time series data to infer pairwise feature-driven dependency.
+This repository contains the code for the paper ["A feature-based information-theoretic approach for detecting interpretable, long-timescale pairwise interactions from time series"](https://arxiv.org/abs/2404.05929). Here we provide the code to reproduce the figures in the paper, as well as the R code to apply this method on a pair of time series data to infer pairwise feature-driven dependency.
 
 ## Installation
 
