@@ -188,33 +188,38 @@ simulate_multiple_runs <- function(source_type, ts_length, driving_feature_times
 
 
 if (!exists("seed")){
-  # for (capturing_feature_timescale in seq(50,200,25))
-  # {
-  #   print(paste0("capturing_feature_timescale:",capturing_feature_timescale))
-  #   simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-  #                          capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
-  # 
-  # }
-  # simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-  #                        capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
+   if (driving_feature_timescale == 100){
+    for (linear_cor in c(0.2, 0.5, 0.6, 0.7, 0.8, 0.9 ))
+    {
+      print(paste0("linear_cor:",linear_cor))
+      simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
+                             capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
+      
+    }
+    for (capturing_feature_timescale in seq(50,200,25))
+    {
+      linear_cor = 0.4
+      print(paste0("capturing_feature_timescale:",capturing_feature_timescale))
+      simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
+                             capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
 
-  for (linear_cor in c(0.5, 0.6, 0.7, 0.8, 0.9 ))
-  {
-    print(paste0("linear_cor:",linear_cor))
+    }
     simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-                                      capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
+                           capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
 
   }
+  else {
+    for (driving_feature_timescale in c(50, 150, 200))
+    {
+      print(paste0("driving_feature_timescale:",driving_feature_timescale))
+      linear_cor <- 0.4
+      capturing_feature_timescale <- driving_feature_timescale
+      simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
+                             capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
+
+    }
+  }
   
-  # for (driving_feature_timescale in c(50, 150, 200))
-  # {
-  #   print(paste0("driving_feature_timescale:",driving_feature_timescale))
-  #   linear_cor <- 0.4
-  #   capturing_feature_timescale <- driving_feature_timescale
-  #   simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-  #                          capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
-  #   
-  # }
   
 } else if (nrow(results[results$process==source_type & 
                            results$ts_length==ts_length & 

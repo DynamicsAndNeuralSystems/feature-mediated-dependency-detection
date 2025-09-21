@@ -344,7 +344,8 @@ compute_TE <- function(theiler_window, source, target, k, k_tau, l, l_tau, delay
   return(data.frame(TE=TE, pValue=pValue))
 }
 
-detect_dependency_with_catch22 <- function(source,target,feature_window,target_hist, number_surrogates=1000,theiler_window_multiplier=1,rotating_surrogates=T){
+detect_dependency_with_catch22 <- function(source,target,feature_window,target_hist, delay=1, number_surrogates=1000,theiler_window_multiplier=1,rotating_surrogates=T){
+  message("Generating catch22 features...")
   source_features <- generate_catch22_features_sliding_window(source,feature_window)
   # MEASURE DEPENDENCIES
   # TE  between target and features
@@ -353,6 +354,7 @@ detect_dependency_with_catch22 <- function(source,target,feature_window,target_h
                            pValue = numeric(),
                            stringsAsFactors = FALSE)
   
+  message("Computing tranfer entropy values for feature-target time-series...")
   for (feature in names(source_features)){
     feature_vector <- source_features[[feature]]
     theiler_window_fte <- max(find_theiler_window(feature_vector),find_theiler_window(target))
@@ -369,6 +371,23 @@ detect_dependency_with_catch22 <- function(source,target,feature_window,target_h
                             rotating_surrogates=rotating_surrogates)
     features_results <-rbind.data.frame(features_results,data.frame(Feature=feature, TE=TE_result$TE,pValue=TE_result$pValue,stringsAsFactors = F))
   }
+  
+  
+  message("Determining statistical sigfinicance of these transfer entropy values...")
+  # Adjust p-values using Holm method
+  features_results$holm_pValue <- p.adjust(features_results$pValue, method = "holm")
+  
+  # Determine significance
+  features_results$significant <- features_results$holm_pValue < 0.05
+  
+  # Determine if any feature is significant
+  significant_features <- features_results$Feature[features_results$holm_pValue < 0.05]
+  if (length(significant_features) > 0) {
+    message("Statistical dependence detected. Significant features: ", paste(significant_features, collapse = ", "))
+  } else {
+    message("No significant statistical dependence detected.")
+  }
+  
   return(features_results)
 }
 
