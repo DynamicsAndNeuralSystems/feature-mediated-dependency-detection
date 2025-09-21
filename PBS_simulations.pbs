@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=2:mem=90GB
+#PBS -l walltime=23:59:59
+#PBS -J 1-6
+#PBS -j oe
+#PBS -M mngu3236@uni.sydney.edu.au
+#PBS -m ae
+
+cd $PBS_O_WORKDIR
+echo $PBS_O_WORKDIR
+echo $PBS_ARRAY_INDEX
+
+ts_lengths=(50 100 500 1000 5000 10000) 
+source_type="random"
+driving_feature_timescale=10
+
+counter=0
+for ts_length in "${ts_lengths[@]}"; do
+	counter=$((counter+1))
+	if [ "$counter" == "$PBS_ARRAY_INDEX" ]; then
+		echo $ts_length
+		out=124
+		while [ $out -eq 124 ]	
+		do
+			bash -c "Rscript main.R --ts_length=$ts_length --source_type=$source_type --driving_feature_timescale=$driving_feature_timescale" 2>&1 | tee "$HOME/jobs/${PBS_JOBID}.log"
+			out=$?
+			echo "Calculations exited with code ${out}" >> "$HOME/jobs/${PBS_JOBID}.log"
+		done
+	fi
+done
+
