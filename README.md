@@ -1,4 +1,4 @@
-# feature-based-dependency-detection
+# feature-mediated-dependency-detection
 
 A method for detecting pairwise interaction based on feature-based adaption of information theoretic metrics
 
@@ -8,7 +8,7 @@ A method for detecting pairwise interaction based on feature-based adaption of i
 - [Usage](#usage)
   - [Simulating data](#simulating-data)
   - [Reproducing figures](#reproducing-figures)
-- [Applying the method on a pair of time series](#applying-the-method-on-a-pair-of-time-series)
+  - [Applying the method on a pair of time series](#applying-the-method-on-a-pair-of-time-series)
 
 
 ## Background
