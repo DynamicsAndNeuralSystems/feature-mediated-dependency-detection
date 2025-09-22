@@ -177,8 +177,8 @@ A data frame (`features_results`) with the following columns:
 |--------------|---------|------------------------------------------------------------------------|
 | Feature      | string  | Name of the feature extracted from the source time series.             |
 | TE           | numeric | Transfer entropy value between the feature and the target time series. |
-| pValue       | numeric | P-value from surrogate testing for the TE measurement.                 |
-| holm-pValue  | numeric | pValue adjusted with Holm-Bonferroni method                            |
-| significance | boolean | whether the Holm-adjusted pValue is statistically significant !        |
+| pValue       | numeric | p-Value from surrogate testing for the TE measurement.                 |
+| holm-pValue  | numeric | p-Value adjusted with Holm-Bonferroni method                            |
+| significance | boolean | Whether the Holm-adjusted pValue is statistically significant !        |
 
 The pvalue are then adjusted using Holm-Bonferroni method, and if any feature has a Holm-adjusted p-value \< 0.05, the function prints "Statistical dependence detected" along with the list of the features with signficant Holm-adjusted pvalues. Otherwise, it prints "No significant statistical dependence detected."
