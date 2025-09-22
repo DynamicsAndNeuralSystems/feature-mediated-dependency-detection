@@ -21,7 +21,7 @@ This repository is written in **R** and requires a small number of dependencies.
 
 ### Step 1: Install R packages
 
-All required R packages are listed in `requirements.txt`. They will be installed automatically when you run `main_simulate.R` or `main_evaluate.R` with the parameters required.\
+All required R packages are listed in `requirements.txt`. They will be installed automatically when you run `main_simulate.R` or `main_evaluate.R` with the parameters required.
 If you want to install them manually, run:
 
 ``` r
@@ -35,19 +35,19 @@ for (p in packages) {
 
 ### Step 2: [JIDT (Java Information Dynamics Toolkit)](https://github.com/jlizier/jidt)
 
-The code here requires `rJvava` and **JIDT**. - The `infofynamics.jar` file needed for JIDT is already included in this repository.\
-- `rJava` is listed in `requirements.txt` and will be installed automatically.\
-- No additional setup is required for reproducing the results in the manuscript.\
+The code here requires `rJvava` and **JIDT**. - The `infofynamics.jar` file needed for JIDT is already included in this repository.
+- `rJava` is listed in `requirements.txt` and will be installed automatically.
+- No additional setup is required for reproducing the results in the manuscript.
 If you want to use JIDT independently of this repo (for custom experiments), see the [official JIDT documentation](https://github.com/jlizier/jidt/wiki/UseInR).
 
 ## Usage
 
-This repository provides everything needed to:\
-1. Run simulations to generate the dynamical processes studied in the manuscript.\
-2. Compute mutual information (MI) using both the traditional signal-based approach and the feature-based approach.\
+This repository provides everything needed to:
+1. Run simulations to generate the dynamical processes studied in the manuscript.
+2. Compute mutual information (MI) using both the traditional signal-based approach and the feature-based approach.
 3. Evaluate simulation results and reproduce the plots shown in the manuscript.
 
-The repository is structured as follows: - `requirements.txt` --- lists all required R packages.\
+The repository is structured as follows: - `requirements.txt` --- lists all required R packages.
 \* `setup.R` --- loads libraries and initializes **JIDT**.\
 \* `src.R` --- core functions for simulations and analyses.\
 \* `main_simulate.R` --- runs simulations, including:\
@@ -63,8 +63,8 @@ The repository is structured as follows: - `requirements.txt` --- lists all requ
 
 #### Random noise processes
 
-Simulating the random noise process requires intensive computation due to the large number of features and time-series lengths considered.\
-We provide a job script, `PBS_simulations.pbs`, to run parallelized simulations on a distributed cluster.\
+Simulating the random noise process requires intensive computation due to the large number of features and time-series lengths considered.
+We provide a job script, `PBS_simulations.pbs`, to run parallelized simulations on a distributed cluster.
 You can adapt this script to match your own computing environment.
 
 #### Non-stationary processes
@@ -139,7 +139,7 @@ All plots will be saved into the specified `output_dir`. If the directory does n
 
 ### Applying the method on a pair of time series
 
-You can use the function `detect_dependency_with_catch22()` to infer feature-driven dependencies between a source time series and a target time series using the feature-based Transfer Entropy approach. The function computes Catch22 features for the source series and evaluates the transfer entropy (TE) from each feature to the target.
+You can use the function `detect_dependency_with_catch22()` from `src.R` to infer feature-driven dependencies between a source time series and a target time series using the feature-based Transfer Entropy approach. The function computes Catch22 features for the source series and evaluates the transfer entropy (TE) from each feature to the target. Note that you will need to run `setup.R` before running this function to call all the libraries required and initilize a JIDT object needed for TE calculation. 
 
 #### Function
 
