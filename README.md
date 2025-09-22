@@ -82,37 +82,6 @@ For example:
 Rscript main_simulate.R --source_type AR3 --ts_length 1000 --driving_feature_timescale 100
 ```
 
-### Reproducing figures
-
-## Usage
-
-This code repository includes the code and all setup needed to run the simulations to generate the processes studied in the manuscript, as well as the mutual information measures from traditional approach and from feature-based approach. The code repo also contains the script to evaluate the results from the simulations and generate the plots used in the manuscript. The code is structure as below:
-
--   All packages required are in requirements.txt
-
--   Libraries and JIDT initialisation is in setup.R
-
--   src.R contains functions used in simulations and analysis
-
--   main_simulate.R is the script to run the simulations (including generating time-series data for the 3 dynamical sources processes studied; their features, the target time series data, signal-based mutual information and feature-based mutual information)
-
--   main_evaluate.R is the script used to run the analysis on simulation data and generate the plots used in the manuscript
-
-### Simulating data
-
-#### Random noise process
-
-Simulating the random noise process requires intensive computation due to the large number of features and time-series lengths considered.\
-We provide a job script, `PBS_simulations.pbs`, to run parallelized simulations on a distributed cluster that we used. You can adapt this script to match your own computing environment.
-
-#### Non-stationary processes
-
-For non-stationary processes, simulation data can be generated directly by running:
-
-``` bash
-Rscript main_simulate.R --source_type <AR3|bimodal_spiking> --ts_length <1000> --driving_feature_timescale <50|100|150|200>
-```
-
 If you run the scripts above to generate simulation data, the results will be saved to results/simulation_studies/new_results.csv.
 
 **Note**: The exact simulation dataset used in the manuscript is also provided here: results/simulation_studies/featureBasedDependency_simulation_results.csv
