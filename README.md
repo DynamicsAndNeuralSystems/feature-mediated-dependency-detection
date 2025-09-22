@@ -47,7 +47,8 @@ This repository provides everything needed to:
 2. Compute mutual information (MI) using both the traditional signal-based approach and the feature-based approach.
 3. Evaluate simulation results and reproduce the plots shown in the manuscript.
 
-The repository is structured as follows: - `requirements.txt` --- lists all required R packages.
+The repository is structured as follows: 
+\* `requirements.txt` --- lists all required R packages. \
 \* `setup.R` --- loads libraries and initializes **JIDT**.\
 \* `src.R` --- core functions for simulations and analyses.\
 \* `main_simulate.R` --- runs simulations, including:\
