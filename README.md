@@ -47,7 +47,7 @@ This repository provides everything needed to:
 2. Compute mutual information (MI) using both the traditional signal-based approach and the feature-based approach.
 3. Evaluate simulation results and reproduce the plots shown in the manuscript.
 
-The repository is structured as follows: 
+The repository is structured as follows: \
 \* `requirements.txt` --- lists all required R packages. \
 \* `setup.R` --- loads libraries and initializes **JIDT**.\
 \* `src.R` --- core functions for simulations and analyses.\
@@ -100,7 +100,7 @@ This code repository includes the code and all setup needed to run the simulatio
 
 ### Simulating data
 
-#### Random noise processes
+#### Random noise process
 
 Simulating the random noise process requires intensive computation due to the large number of features and time-series lengths considered.\
 We provide a job script, `PBS_simulations.pbs`, to run parallelized simulations on a distributed cluster that we used. You can adapt this script to match your own computing environment.
