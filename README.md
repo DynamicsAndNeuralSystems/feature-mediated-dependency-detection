@@ -84,19 +84,41 @@ For example:
 Rscript main_simulate.R --source_type AR3 --ts_length 1000 --driving_feature_timescale 100
 ```
 
-If you run the scripts above to generate simulation data, the results will be saved to results/simulation_studies/new_results.csv.
 
-**Note**: The exact simulation dataset used in the manuscript is also provided here: results/simulation_studies/featureBasedDependency_simulation_results.csv
+If you receive the following warning:
+```
+Warning in install.packages :
+'lib = "/usr/local/lib/R/site-library"' is not writable
+```
+then you can run the following code and that should resolve the issue:
+```
+mkdir -p <some_writeable_folder>
+export R_LIBS_USER="<some_writeable_folder>"
+```
+If you run the scripts above to generate simulation data, the results will be saved to `results/simulation_studies/new_results.csv`.
+
+**Note**: The exact simulation dataset used in the manuscript is also provided here: `results/simulation_studies/featureBasedDependency_simulation_results.csv`.
 
 ### Reproducing figures
 
 To reproduce the plots from the manuscript, run:
 
 ``` bash
-Rscript main_evaluate.R --output_dir <path/to/output>
+Rscript main_evaluate.R <path/to/output>
 ```
 
-All plots will be saved into the specified `output_dir`. If the directory does not exist, it will be created automatically.
+Similar to running the simulation script, if you receive the following warning while running the code above:
+```
+Warning in install.packages :
+'lib = "/usr/local/lib/R/site-library"' is not writable
+```
+then running the following code should resolve the issue:
+```
+mkdir -p <some_writeable_folder>
+export R_LIBS_USER="<some_writeable_folder>"
+```
+
+All plots will be saved into the specified `<path/to/output>`. If the directory does not exist, it will be created automatically.
 
 #### Mapping of plots to manuscript figures
 
