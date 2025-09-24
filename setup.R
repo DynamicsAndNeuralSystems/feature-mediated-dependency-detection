@@ -28,7 +28,6 @@ library(here)
 library(numDeriv)
 library(pracma)
 library(ggrepel)
-library(viridis)
 
 #-----------------------------------------
 # Initialise JIDT 
