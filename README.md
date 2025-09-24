@@ -1,5 +1,7 @@
 # feature-mediated-dependency-detection
 
+[![DOI](https://zenodo.org/badge/1062958385.svg)](https://doi.org/10.5281/zenodo.17188607)
+
 A method for detecting pairwise interaction based on feature-based adaption of information theoretic metrics
 
 ## Table of Contents
