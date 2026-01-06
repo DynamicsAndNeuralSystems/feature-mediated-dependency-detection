@@ -17,7 +17,7 @@ A method for detecting pairwise interaction based on feature-based adaption of i
 
 This repository contains supporting code for our open access paper,
 
-"Nguyen et al., _Physical Review Research_ (2025). A feature-based information-theoretic approach for detecting interpretable, long-timescale pairwise interactions from time series". [Link](https://link.aps.org/doi/10.1103/qnx2-yp4c).
+Nguyen et al., _Physical Review Research_ (2025). "A feature-based information-theoretic approach for detecting interpretable, long-timescale pairwise interactions from time series". [Link](https://link.aps.org/doi/10.1103/qnx2-yp4c).
 
 Here we provide the code to reproduce the figures in the paper, as well as the R code to apply this method on a pair of time series data to infer pairwise feature-driven dependency.
 
