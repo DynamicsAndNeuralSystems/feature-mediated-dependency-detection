@@ -327,11 +327,22 @@ compute_TE <- function(theiler_window, source, target, k, k_tau, l, l_tau, delay
   TE <- .jcall(teCalc, "D", "computeAverageLocalOfObservations")
   if (rotating_surrogates){
     numberObservations <- .jcall(teCalc,"I","getNumObservations")
-    newOrderings <- matrix(0, nrow = number_surrogates, ncol = numberObservations)
-    for (s in 1:number_surrogates) {
-      # Need to shift more than the window, but not so much that we push values back within their own window
-      thisShift <- theiler_window + sample(numberObservations - 2*theiler_window + 1, 1)
-      newOrderings[s, ] <- shifter(c(1:numberObservations),thisShift) -1 
+    # Need to shift more than the window, but not so much that we push values back within their own window:
+    # shifts theiler_window+1, ..., N-theiler_window-1. There are only N - 2*theiler_window - 1 such distinct
+    # surrogates, so use each at most once (sampled without replacement) rather than resampling them
+    min_shift <- max(theiler_window, 0) + 1
+    max_shift <- numberObservations - min_shift
+    if (max_shift < min_shift) {
+      stop("Too few observations (", numberObservations, ") for circular-shift surrogates with a Theiler window of ",
+           theiler_window, " samples")
+    }
+    admissible_shifts <- min_shift:max_shift
+    if (length(admissible_shifts) > number_surrogates) {
+      admissible_shifts <- admissible_shifts[sample.int(length(admissible_shifts), number_surrogates)]
+    }
+    newOrderings <- matrix(0, nrow = length(admissible_shifts), ncol = numberObservations)
+    for (s in seq_along(admissible_shifts)) {
+      newOrderings[s, ] <- shifter(c(1:numberObservations),admissible_shifts[s]) -1 
     }
     storage.mode(newOrderings) <- "integer"
     newOrderingsArray <- .jarray(newOrderings,"[I",dispatch=TRUE)
@@ -340,18 +351,43 @@ compute_TE <- function(theiler_window, source, target, k, k_tau, l, l_tau, delay
   } else{
     nullDist <- .jcall(teCalc, "Linfodynamics/utils/EmpiricalMeasurementDistribution;", "computeSignificance", as.integer(number_surrogates))
   }
-  pValue <- nullDist$pValue
-  return(data.frame(TE=TE, pValue=pValue))
+  # JIDT's pValue is count/n, which is 0 whenever the observed value beats every surrogate; count the observed
+  # value as one of the n+1 equally likely values under the null instead: p = (count + 1)/(n + 1)
+  surrogate_values <- nullDist$distribution
+  nSurrogates <- length(surrogate_values)
+  pValue <- (sum(surrogate_values >= TE) + 1) / (nSurrogates + 1)
+  return(data.frame(TE=TE, pValue=pValue, nSurrogates=nSurrogates))
 }
 
 detect_dependency_with_catch22 <- function(source,target,feature_window,target_hist, delay=1, number_surrogates=1000,theiler_window_multiplier=1,rotating_surrogates=T){
+  # Check inputs up front: NA/NaN/Inf values otherwise fail later with an uninformative error (from acf)
+  check_finite_series(source, "source")
+  check_finite_series(target, "target")
+  if (length(source) < feature_window) {
+    stop("source (length ", length(source), ") is shorter than feature_window (", feature_window, ")")
+  }
+  if (sd(target) == 0) {
+    stop("target is constant, so its mutual information with any feature is undefined")
+  }
   message("Generating catch22 features...")
   source_features <- generate_catch22_features_sliding_window(source,feature_window)
+  # catch22 returns NaN for some features on windows with no variation (e.g., a flat stretch of the
+  # source at least as long as feature_window); stop with a clear message rather than failing later
+  nonfinite_windows <- sapply(source_features, function(v) sum(!is.finite(v)))
+  if (any(nonfinite_windows > 0)) {
+    bad <- nonfinite_windows[nonfinite_windows > 0]
+    stop("catch22 returned non-finite values (NaN/Inf) in some of the ", nrow(source_features),
+         " windows for ", length(bad), " feature(s): ",
+         paste0(names(bad), " (", bad, " windows)", collapse = ", "),
+         ". This usually means the source has constant stretches at least feature_window = ", feature_window,
+         " samples long (e.g., sensor dropout or zero padding); remove or shorten these stretches before testing.")
+  }
   # MEASURE DEPENDENCIES
   # TE  between target and features
   features_results <- data.frame(Feature = character(),
                            TE = numeric(),
                            pValue = numeric(),
+                           nSurrogates = integer(),
                            stringsAsFactors = FALSE)
   
   message("Computing tranfer entropy values for feature-target time-series...")
@@ -365,13 +401,24 @@ detect_dependency_with_catch22 <- function(source,target,feature_window,target_h
                             k_tau=1,
                             l=1,
                             l_tau=1,
-                            delay=1,
+                            delay=delay,
                             number_surrogates=number_surrogates,
                             theiler_window_multiplier=theiler_window_multiplier,
                             rotating_surrogates=rotating_surrogates)
-    features_results <-rbind.data.frame(features_results,data.frame(Feature=feature, TE=TE_result$TE,pValue=TE_result$pValue,stringsAsFactors = F))
+    features_results <-rbind.data.frame(features_results,data.frame(Feature=feature, TE=TE_result$TE,pValue=TE_result$pValue,nSurrogates=TE_result$nSurrogates,stringsAsFactors = F))
   }
   
+  
+  # With few distinct surrogates (short series) the smallest attainable p-value, 1/(nSurrogates + 1), may be too
+  # large for any feature to pass the Holm correction over all features
+  min_attainable_p <- 1 / (max(features_results$nSurrogates) + 1)
+  if (min_attainable_p * nrow(features_results) >= 0.05) {
+    warning("Only ", max(features_results$nSurrogates), " surrogates were used (for circular shifts this is limited ",
+            "by the series length), so the smallest ",
+            "attainable p-value is ", signif(min_attainable_p, 3), " and no feature can be significant after Holm ",
+            "correction over ", nrow(features_results), " features at alpha = 0.05; use a longer time series ",
+            "(or fewer candidate features)")
+  }
   
   message("Determining statistical sigfinicance of these transfer entropy values...")
   # Adjust p-values using Holm method
@@ -389,6 +436,18 @@ detect_dependency_with_catch22 <- function(source,target,feature_window,target_h
   }
   
   return(features_results)
+}
+
+check_finite_series <- function(x, name) {
+  if (!is.numeric(x)) {
+    stop(name, " must be a numeric vector")
+  }
+  n_bad <- sum(!is.finite(x))
+  if (n_bad > 0) {
+    stop(name, " contains ", n_bad, " missing or non-finite value(s) (NA/NaN/Inf), first at index ",
+         which(!is.finite(x))[1], "; remove or impute them before testing")
+  }
+  invisible(TRUE)
 }
 
 shifter <- function(x, n = 1) {

@@ -3,7 +3,7 @@
 #-----------------------------------------
 
 # Generative process settings
-# source_type from main.R script
+# source_type from main_simulate.R
 ts_length <- as.numeric(ts_length)
 
 # Driving feature settings
@@ -12,8 +12,8 @@ driving_feature_timescale <- as.numeric(driving_feature_timescale)
 # Capturing feature settings
 capturing_feature_timescale <- driving_feature_timescale 
 
-# Target generation 
-linear_cor <- 0.4 # Coefficient of target process and source feature 
+# Target generation (the coefficient linear_cor = 1 - beta of the target on the driving feature is set by
+# simulation_settings() below)
 lag_window_source_target <- 1
 source_target_function <- "linear"
 
@@ -67,11 +67,13 @@ simulate_process_and_compute_TE <- function(seed, source_type, ts_length, drivin
   source_ts <- generate_source_var(source_type, ts_length)
   if (source_type=="random"){
     driving_features <- generate_catch22_features_sliding_window(source_ts,driving_feature_timescale)
+    new_results <- NULL
     for (driving_feature_name in names(driving_features)){
       driving_feature <- driving_features[[driving_feature_name]]
       if (sd(driving_feature)!=0){
-        new_results <- simulate_from_driving_feature(seed, source_ts, source_type, ts_length, driving_feature, driving_feature_name, driving_feature_timescale, 
-                                      capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier)
+        # accumulate the results of every driving feature (not only the last one)
+        new_results <- rbind.data.frame(new_results, simulate_from_driving_feature(seed, source_ts, source_type, ts_length, driving_feature, driving_feature_name, driving_feature_timescale, 
+                                      capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier))
       }
     }
   } else if (source_type=="bimodal_spiking"){
@@ -170,9 +172,7 @@ simulate_from_driving_feature <- function(seed, source_ts, source_type, ts_lengt
 }
 
 simulate_multiple_runs <- function(source_type, ts_length, driving_feature_timescale, 
-                                   capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations){
-  set.seed(master_seed)
-  simulation_seeds <- sample.int(100,no_simulations)
+                                   capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, simulation_seeds){
   for (seed in simulation_seeds){
     if (nrow(results[results$process==source_type & 
                      results$ts_length==ts_length & 
@@ -187,46 +187,46 @@ simulate_multiple_runs <- function(source_type, ts_length, driving_feature_times
 }
 
 
-if (!exists("seed")){
-   if (driving_feature_timescale == 100){
-    for (linear_cor in c(0.2, 0.5, 0.6, 0.7, 0.8, 0.9 ))
-    {
-      print(paste0("linear_cor:",linear_cor))
-      simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-                             capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
-      
-    }
-    for (capturing_feature_timescale in seq(50,200,25))
-    {
-      linear_cor = 0.4
-      print(paste0("capturing_feature_timescale:",capturing_feature_timescale))
-      simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-                             capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
-
-    }
-    simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-                           capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
-
+# Parameter settings of the paper's simulation studies (noise strength beta = 1 - linear_cor):
+# - random source (Fig. 4): capturing timescale = interaction timescale = driving_feature_timescale
+#   (10 samples in the paper) and beta = 0.2
+# - AR3 and bimodal_spiking with driving_feature_timescale = 100: noise strengths beta = 0.2, 0.4, 0.6, 0.8
+#   at capturing timescale 100 (Fig. 5), and capturing timescales 50-200 at beta = 0.6 (Fig. 6)
+# - AR3 and bimodal_spiking with any other driving_feature_timescale: interaction timescales 50, 150 and 200
+#   (with matching capturing timescales) at beta = 0.6 (Fig. 7)
+simulation_settings <- function(source_type, driving_feature_timescale){
+  if (source_type == "random"){
+    settings <- data.frame(driving_feature_timescale = driving_feature_timescale,
+                           capturing_feature_timescale = driving_feature_timescale,
+                           linear_cor = 0.8)
+  } else if (driving_feature_timescale == 100){
+    settings <- rbind(data.frame(driving_feature_timescale = 100, capturing_feature_timescale = 100,
+                                 linear_cor = c(0.2, 0.4, 0.6, 0.8)),
+                      data.frame(driving_feature_timescale = 100, capturing_feature_timescale = seq(50, 200, 25),
+                                 linear_cor = 0.4))
+    settings <- unique(settings)
+  } else {
+    settings <- data.frame(driving_feature_timescale = c(50, 150, 200),
+                           capturing_feature_timescale = c(50, 150, 200),
+                           linear_cor = 0.4)
   }
-  else {
-    for (driving_feature_timescale in c(50, 150, 200))
-    {
-      print(paste0("driving_feature_timescale:",driving_feature_timescale))
-      linear_cor <- 0.4
-      capturing_feature_timescale <- driving_feature_timescale
-      simulate_multiple_runs(source_type, ts_length, driving_feature_timescale,
-                             capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier, no_simulations)
+  rownames(settings) <- NULL
+  return(settings)
+}
 
-    }
-  }
-  
-  
-} else if (nrow(results[results$process==source_type & 
-                           results$ts_length==ts_length & 
-                           results$driving_feature_timescale==driving_feature_timescale & 
-                           results$capturing_feature_timescale==capturing_feature_timescale &
-                           results$linear_cor==linear_cor &
-                           results$seed==seed,])==0) { 
-  simulate_process_and_compute_TE(seed, source_type, ts_length, driving_feature_timescale, 
-                                  capturing_feature_timescale, source_target_function, linear_cor, theiler_window_multiplier)
-} 
+# Run all settings for the 50 simulation seeds, or only for the seed given on the command line
+if (exists("seed")){
+  simulation_seeds <- as.integer(seed)
+} else {
+  set.seed(master_seed)
+  simulation_seeds <- sample.int(100,no_simulations)
+}
+settings <- simulation_settings(source_type, driving_feature_timescale)
+for (i in seq_len(nrow(settings))){
+  print(paste0("driving_feature_timescale:", settings$driving_feature_timescale[i],
+               " capturing_feature_timescale:", settings$capturing_feature_timescale[i],
+               " linear_cor:", settings$linear_cor[i]))
+  simulate_multiple_runs(source_type, ts_length, settings$driving_feature_timescale[i],
+                         settings$capturing_feature_timescale[i], source_target_function, settings$linear_cor[i],
+                         theiler_window_multiplier, simulation_seeds)
+}
