@@ -345,8 +345,28 @@ compute_TE <- function(theiler_window, source, target, k, k_tau, l, l_tau, delay
 }
 
 detect_dependency_with_catch22 <- function(source,target,feature_window,target_hist, delay=1, number_surrogates=1000,theiler_window_multiplier=1,rotating_surrogates=T){
+  # Check inputs up front: NA/NaN/Inf values otherwise fail later with an uninformative error (from acf)
+  check_finite_series(source, "source")
+  check_finite_series(target, "target")
+  if (length(source) < feature_window) {
+    stop("source (length ", length(source), ") is shorter than feature_window (", feature_window, ")")
+  }
+  if (sd(target) == 0) {
+    stop("target is constant, so its mutual information with any feature is undefined")
+  }
   message("Generating catch22 features...")
   source_features <- generate_catch22_features_sliding_window(source,feature_window)
+  # catch22 returns NaN for some features on windows with no variation (e.g., a flat stretch of the
+  # source at least as long as feature_window); stop with a clear message rather than failing later
+  nonfinite_windows <- sapply(source_features, function(v) sum(!is.finite(v)))
+  if (any(nonfinite_windows > 0)) {
+    bad <- nonfinite_windows[nonfinite_windows > 0]
+    stop("catch22 returned non-finite values (NaN/Inf) in some of the ", nrow(source_features),
+         " windows for ", length(bad), " feature(s): ",
+         paste0(names(bad), " (", bad, " windows)", collapse = ", "),
+         ". This usually means the source has constant stretches at least feature_window = ", feature_window,
+         " samples long (e.g., sensor dropout or zero padding); remove or shorten these stretches before testing.")
+  }
   # MEASURE DEPENDENCIES
   # TE  between target and features
   features_results <- data.frame(Feature = character(),
@@ -389,6 +409,18 @@ detect_dependency_with_catch22 <- function(source,target,feature_window,target_h
   }
   
   return(features_results)
+}
+
+check_finite_series <- function(x, name) {
+  if (!is.numeric(x)) {
+    stop(name, " must be a numeric vector")
+  }
+  n_bad <- sum(!is.finite(x))
+  if (n_bad > 0) {
+    stop(name, " contains ", n_bad, " missing or non-finite value(s) (NA/NaN/Inf), first at index ",
+         which(!is.finite(x))[1], "; remove or impute them before testing")
+  }
+  invisible(TRUE)
 }
 
 shifter <- function(x, n = 1) {
