@@ -30,15 +30,24 @@ simulation_results$capturing_feature <- ifelse(simulation_results$capturing_feat
                                                   simulation_results$capturing_feature)
 
 # apply Holm pvalue correction 
-simulation_results <- simulation_results %>%
-  group_by(seed, process, ts_length, driving_feature, driving_feature_timescale,linear_cor) %>%
-  mutate(
-    pValue_holm_corrected = ifelse(
-      inference_type == "MI_f",
-      p.adjust(pValue, method = "holm"),
-      pValue
-    )
-  ) 
+# One Holm family = the MI_f p-values of the 24 catch24 capturing features from one simulation run at one
+# capturing timescale (the MI_F family of Sec. II A-B of the paper). A driving feature that is not in catch24
+# (e.g., spike_count, autocorrelation_lag1), added as an extra capturing feature for comparison, is adjusted
+# as a 25th member of that family. MI_s and the z_null control are single tests and keep their unadjusted p-values.
+adjust_pvalues_holm <- function(results, family_features) {
+  results %>%
+    group_by(seed, process, ts_length, driving_feature, driving_feature_timescale, capturing_feature_timescale, linear_cor) %>%
+    mutate(
+      is_MI_f = inference_type == "MI_f",
+      in_holm_family = is_MI_f & capturing_feature %in% family_features,
+      p_holm_family = replace(pValue, in_holm_family, p.adjust(pValue[in_holm_family], method = "holm")),
+      p_holm_with_extra = replace(pValue, is_MI_f, p.adjust(pValue[is_MI_f], method = "holm")),
+      pValue_holm_corrected = ifelse(is_MI_f & !in_holm_family, p_holm_with_extra, p_holm_family)
+    ) %>%
+    ungroup() %>%
+    select(-is_MI_f, -in_holm_family, -p_holm_family, -p_holm_with_extra)
+}
+simulation_results <- adjust_pvalues_holm(simulation_results, family_features = feature_name_mapping$Short_name)
 simulation_results$significant_pValue_holm <- ifelse(simulation_results$pValue_holm_corrected<0.05,1,0)
 
 bonferroni_p_value_threshold <- 0.05/25 #apply Bonferroni correction for p-value when doing multiple hypothesis testing 
