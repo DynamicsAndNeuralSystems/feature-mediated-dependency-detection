@@ -1,36 +1,50 @@
-# feature-mediated-dependency-detection
+<h1 align="center">feature-mediated-dependency-detection</h1>
+<h3 align="center">Detecting pairwise interactions with feature-based mutual information (<em>MI<sub>F</sub></em>)</h3>
 
-[![DOI](https://zenodo.org/badge/1062958385.svg)](https://doi.org/10.5281/zenodo.17188607)
+<p align="center">
+  <a href="https://doi.org/10.1103/qnx2-yp4c"><img src="https://img.shields.io/badge/paper-Phys%20Rev%20Research%20(2025)-informational" alt="Paper"/></a>
+  <a href="https://doi.org/10.5281/zenodo.17188607"><img src="https://zenodo.org/badge/1062958385.svg" alt="DOI"/></a>
+  <img src="https://img.shields.io/badge/language-R-blue" alt="Language: R"/>
+</p>
 
-A method for detecting pairwise interaction based on feature-based adaption of information theoretic metrics
+This repository provides a method for detecting pairwise interactions between time series, based on a feature-based adaptation of information-theoretic measures.
+Rather than comparing the raw signals, the method computes interpretable time-series features of the source in a sliding window (the 24 _catch24_ features: the 22 [catch22](https://github.com/DynamicsAndNeuralSystems/catch22) features plus the mean and standard deviation), and tests which feature carries information about the target.
+This lets it detect interactions that act over long timescales, and tells you which property of the source (e.g., its variance or autocorrelation) mediates the dependence.
+The method is implemented in **R**, using the [Java Information Dynamics Toolkit (JIDT)](https://github.com/jlizier/jidt) for the information-theoretic estimates.
 
-## Table of Contents
-- [Background](#background)
+The code accompanies the open-access paper:
+
+> A. Nguyen, O. McMullin, J. T. Lizier, and B. D. Fulcher, "[Feature-based information-theoretic approach for detecting interpretable, long-timescale pairwise interactions from time series](https://doi.org/10.1103/qnx2-yp4c)", _Physical Review Research_ **7**, 043283 (2025) ([arXiv:2404.05929](https://arxiv.org/abs/2404.05929)).
+
+It contains the code to apply the method to a pair of time series, and the code to reproduce the simulations and figures in the paper.
+
+## Contents
+
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Applying the method to a pair of time series](#applying-the-method-to-a-pair-of-time-series)
   - [Simulating data](#simulating-data)
-  - [Reproducing figures](#reproducing-figures)
-  - [Applying the method on a pair of time series](#applying-the-method-on-a-pair-of-time-series)
-
-
-## Background
-
-This repository contains supporting code for our open access paper,
-
-Nguyen et al., _Physical Review Research_ (2025). "A feature-based information-theoretic approach for detecting interpretable, long-timescale pairwise interactions from time series". [Link](https://link.aps.org/doi/10.1103/qnx2-yp4c).
-
-Here we provide the code to reproduce the figures in the paper, as well as the R code to apply this method on a pair of time series data to infer pairwise feature-driven dependency.
+  - [Reproducing the figures](#reproducing-the-figures)
+- [Repository structure](#repository-structure)
+- [Citation](#citation)
 
 ## Installation
 
-This repository is written in **R** and requires a small number of dependencies.
+You need [R](https://www.r-project.org) and a Java Development Kit (JDK), which the `rJava` package requires.
+Clone the repository, and run all commands below from its top-level folder:
 
-### Step 1: Install R packages
+```bash
+git clone https://github.com/DynamicsAndNeuralSystems/feature-mediated-dependency-detection.git
+cd feature-mediated-dependency-detection
+```
 
-All required R packages are listed in `requirements.txt`. They will be installed automatically when you run `main_simulate.R` or `main_evaluate.R` with the parameters required.
-If you want to install them manually, run:
+### Step 1: R packages
 
-``` r
+All required R packages are listed in `requirements.txt`.
+They are installed automatically when you run `main_simulate.R` or `main_evaluate.R`.
+To install them manually, run in R:
+
+```r
 packages <- readLines("requirements.txt")
 for (p in packages) {
   if (!requireNamespace(p, quietly = TRUE)) {
@@ -39,144 +53,163 @@ for (p in packages) {
 }
 ```
 
-### Step 2: [JIDT (Java Information Dynamics Toolkit)](https://github.com/jlizier/jidt)
+If R warns that `lib = "/usr/local/lib/R/site-library"` is not writable, install into a folder you can write to:
 
-The code here requires `rJvava` and **JIDT**. - The `infofynamics.jar` file needed for JIDT is already included in this repository.
-- `rJava` is listed in `requirements.txt` and will be installed automatically.
-- No additional setup is required for reproducing the results in the manuscript.
-If you want to use JIDT independently of this repo (for custom experiments), see the [official JIDT documentation](https://github.com/jlizier/jidt/wiki/UseInR).
+```bash
+mkdir -p <some_writeable_folder>
+export R_LIBS_USER="<some_writeable_folder>"
+```
+
+### Step 2: JIDT
+
+The JIDT file `infodynamics.jar` is already included in this repository, and `setup.R` loads it.
+No additional setup is needed to apply the method or to reproduce the results in the paper.
+To use JIDT independently of this repository, see the [JIDT documentation for R](https://github.com/jlizier/jidt/wiki/UseInR).
 
 ## Usage
 
-This repository provides everything needed to:
-1. Run simulations to generate the dynamical processes studied in the manuscript.
-2. Compute mutual information (MI) using both the traditional signal-based approach and the feature-based approach.
-3. Evaluate simulation results and reproduce the plots shown in the manuscript.
+### Applying the method to a pair of time series
 
-The repository is structured as follows: \
-\* `requirements.txt` --- lists all required R packages. \
-\* `setup.R` --- loads libraries and initializes **JIDT**.\
-\* `src.R` --- core functions for simulations and analyses.\
-\* `main_simulate.R` --- runs simulations, including:\
-  \* Generating time-series data for the three dynamical source processes studied.\
-  \* Extracting their features.\
-  \* Producing target time-series data.\
-  \* Computing both signal-based MI and feature-based MI.\
-\* `main_evaluate.R` --- evaluates simulation results and generates the manuscript plots.
+Load the libraries and initialize JIDT with `setup.R`, load the functions in `src.R`, and call `detect_dependency_with_catch22()`:
 
-------------------------------------------------------------------------
+```r
+source("setup.R")
+source("src.R")
 
-### Simulating data
+set.seed(1)
+source_ts <- rnorm(300)   # the source time series
+target_ts <- rnorm(300)   # the target time series
 
-#### Random noise processes
-
-Simulating the random noise process requires intensive computation due to the large number of features and time-series lengths considered.
-We provide a job script, `PBS_simulations.pbs`, to run parallelized simulations on a distributed cluster.
-You can adapt this script to match your own computing environment.
-
-#### Non-stationary processes
-
-For non-stationary processes, simulation data can be generated directly by running:
-
-``` bash
-Rscript main_simulate.R --source_type <AR3|bimodal_spiking> --ts_length <1000> --driving_feature_timescale <50|100|150|200>
+results <- detect_dependency_with_catch22(
+  source_ts, target_ts,
+  feature_window = 20,
+  target_hist = 0,
+  number_surrogates = 100
+)
+head(results)
 ```
 
-For example:
+The function computes the catch24 features of the source in a sliding window of `feature_window` samples, and estimates the information between each feature and the target.
+For each feature, it assesses significance with a surrogate test and corrects for the number of features using the Holm-Bonferroni method.
+It prints a message, either "Statistical dependence detected", followed by the features with a Holm-adjusted p-value below 0.05, or "No significant statistical dependence detected".
 
-``` bash
-Rscript main_simulate.R --source_type AR3 --ts_length 1000 --driving_feature_timescale 100
-```
-
-
-If you receive the following warning:
-```
-Warning in install.packages :
-'lib = "/usr/local/lib/R/site-library"' is not writable
-```
-then you can run the following code and that should resolve the issue:
-```
-mkdir -p <some_writeable_folder>
-export R_LIBS_USER="<some_writeable_folder>"
-```
-If you run the scripts above to generate simulation data, the results will be saved to `results/simulation_studies/new_results.csv`.
-
-**Note**: The exact simulation dataset used in the manuscript is also provided here: `results/simulation_studies/featureBasedDependency_simulation_results.csv`.
-
-### Reproducing figures
-
-To reproduce the plots from the manuscript, run:
-
-``` bash
-Rscript main_evaluate.R <path/to/output>
-```
-
-Similar to running the simulation script, if you receive the following warning while running the code above:
-```
-Warning in install.packages :
-'lib = "/usr/local/lib/R/site-library"' is not writable
-```
-then running the following code should resolve the issue:
-```
-mkdir -p <some_writeable_folder>
-export R_LIBS_USER="<some_writeable_folder>"
-```
-
-All plots will be saved into the specified `<path/to/output>`. If the directory does not exist, it will be created automatically.
-
-#### Mapping of plots to manuscript figures
-
--   **Figure 4a** → `RandomResultsMatrix.pdf`\
--   **Figures 4b--e** → `RandomResultsLinePlots.pdf`\
--   **Figure 5a** → `AR3_Noise.pdf`\
--   **Figure 5b** → `bimodal_spiking_Noise.pdf`\
--   **Figure 6a** → `AR3_DrivingTimescale.pdf`\
--   **Figure 6b** → `bimodal_DrivingTimescale.pdf`\
--   **Figure 7a** → `AR3_CapturingTimescale.pdf`\
--   **Figure 7b** → `bimodal_CapturingTimescale.pdf`
-
-### Applying the method on a pair of time series
-
-You can use the function `detect_dependency_with_catch22()` from `src.R` to infer feature-driven dependencies between a source time series and a target time series using the feature-based Transfer Entropy approach. The function computes Catch22 features for the source series and evaluates the transfer entropy (TE) from each feature to the target. Note that you will need to run `setup.R` before running this function to call all the libraries required and initilize a JIDT object needed for TE calculation. 
-
-#### Function
-
-``` r
+```r
 detect_dependency_with_catch22(
-  source, 
-  target, 
-  feature_window, 
-  target_hist, 
-  delay = 1, 
-  number_surrogates = 1000, 
-  theiler_window_multiplier = 1, 
+  source,
+  target,
+  feature_window,
+  target_hist,
+  delay = 1,
+  number_surrogates = 1000,
+  theiler_window_multiplier = 1,
   rotating_surrogates = TRUE
 )
 ```
 
 #### Parameters
 
-| Parameter                   | Type           | Description                                                                                           |
-|-----------------------------|----------------|-------------------------------------------------------------------------------------------------------|
-| `source`                    | numeric vector | The source time series.                                                                               |
-| `target`                    | numeric vector | The target time series.                                                                               |
-| `feature_window`            | integer        | Window size (in samples) for computing Catch22 features on the source series.                         |
-| `target_hist`               | integer        | History length of the target series used in TE calculation. For mutual information, this is set to 0. |
-| `delay`                     | integer        | Time delay between source and target for TE calculation. Default is 1.                                |
-| `number_surrogates`         | integer        | Number of surrogate time-series to generate for statistical testing of TE. Default is 1000.           |
-| `theiler_window_multiplier` | numeric        | Multiplier for the Theiler window for dynamic correlation exclusion. Default is 1.                    |
-| `rotating_surrogates`       | logical        | If TRUE, use rotating surrogates for TE significance testing. Default is TRUE.                        |
+| Parameter                   | Type           | Description |
+|-----------------------------|----------------|-------------|
+| `source`                    | numeric vector | The source time series. |
+| `target`                    | numeric vector | The target time series. |
+| `feature_window`            | integer        | Window size (in samples) for computing the features of the source series. |
+| `target_hist`               | integer        | History length of the target series used in the transfer entropy calculation. For mutual information, as used throughout the paper, set this to 0. |
+| `delay`                     | integer        | Time delay between source and target. Default is 1. |
+| `number_surrogates`         | integer        | Number of surrogate time series generated for the statistical test. Default is 1000. |
+| `theiler_window_multiplier` | numeric        | Multiplier for the Theiler window used for dynamic correlation exclusion. Default is 1. |
+| `rotating_surrogates`       | logical        | If `TRUE`, use rotating (circular-shift) surrogates for the significance test. Default is `TRUE`. |
 
 #### Returns
 
-A data frame (`features_results`) with the following columns:
+A data frame with one row per feature and the following columns:
 
-| Column       | Type    | Description                                                            |
-|--------------|---------|------------------------------------------------------------------------|
-| Feature      | string  | Name of the feature extracted from the source time series.             |
-| TE           | numeric | Transfer entropy value between the feature and the target time series. |
-| pValue       | numeric | p-Value from surrogate testing for the TE measurement.                 |
-| holm-pValue  | numeric | p-Value adjusted with Holm-Bonferroni method                            |
-| significance | boolean | Whether the Holm-adjusted pValue is statistically significant !        |
+| Column         | Type    | Description |
+|----------------|---------|-------------|
+| `Feature`      | string  | Name of the feature computed from the source time series. |
+| `TE`           | numeric | Information measure between the feature and the target time series (the mutual information when `target_hist = 0`). |
+| `pValue`       | numeric | p-value from surrogate testing. |
+| `holm_pValue`  | numeric | p-value adjusted with the Holm-Bonferroni method. |
+| `significant`  | logical | Whether the Holm-adjusted p-value is below 0.05. |
 
-The pvalue are then adjusted using Holm-Bonferroni method, and if any feature has a Holm-adjusted p-value \< 0.05, the function prints "Statistical dependence detected" along with the list of the features with signficant Holm-adjusted pvalues. Otherwise, it prints "No significant statistical dependence detected."
+### Simulating data
+
+The simulations of the paper generate source processes, extract their features, produce target time series, and compute both the signal-based and the feature-based mutual information.
+
+#### Random noise processes
+
+Simulating the random noise process is computationally intensive, because of the large number of features and time-series lengths considered.
+The job script `PBS_simulations.pbs` runs parallelized simulations on a PBS cluster, and you can adapt it to your computing environment.
+
+#### Non-stationary processes
+
+Simulation data for the non-stationary processes can be generated directly with:
+
+```bash
+Rscript main_simulate.R --source_type=<AR3|bimodal_spiking> --ts_length=<1000> --driving_feature_timescale=<50|100|150|200>
+```
+
+For example:
+
+```bash
+Rscript main_simulate.R --source_type=AR3 --ts_length=1000 --driving_feature_timescale=100
+```
+
+Each argument is given as `--name=value`.
+Each run performs 50 simulations, so it can take a long time.
+The results are saved to `results/simulation_studies/new_results.csv`.
+
+The exact simulation dataset used in the paper is also provided, in `results/simulation_studies/featureBasedDependency_simulation_results.csv`.
+
+### Reproducing the figures
+
+To reproduce the plots in the paper, run:
+
+```bash
+Rscript main_evaluate.R <path/to/output>
+```
+
+All plots are saved into the specified folder, which is created if it does not exist.
+
+| Figure in the paper | Output file |
+|---|---|
+| Fig. 4a | `RandomResultsMatrix.pdf` |
+| Figs. 4b-e | `RandomResultsLinePlots.pdf` |
+| Fig. 5a | `AR3_Noise.pdf` |
+| Fig. 5b | `bimodal_spiking_Noise.pdf` |
+| Fig. 6a | `AR3_DrivingTimescale.pdf` |
+| Fig. 6b | `bimodal_spiking_DrivingTimescale.pdf` |
+| Fig. 7a | `AR3_CapturingTimescale.pdf` |
+| Fig. 7b | `bimodal_spiking_CapturingTimescale.pdf` |
+
+## Repository structure
+
+| File or folder | Contents |
+|---|---|
+| `requirements.txt` | The R packages required. |
+| `setup.R` | Loads the libraries and initializes JIDT. |
+| `src.R` | Core functions for the simulations and analyses, including `detect_dependency_with_catch22()`. |
+| `main_simulate.R` | Runs the simulations: generates the source processes, extracts their features, produces target time series, and computes the signal-based and feature-based mutual information. |
+| `main_evaluate.R` | Evaluates the simulation results and generates the plots of the paper. |
+| `analyses/` | The scripts called by `main_simulate.R` and `main_evaluate.R`. |
+| `PBS_simulations.pbs` | Job script for running the simulations on a PBS cluster. |
+| `results/simulation_studies/` | The simulation results of the paper, and the output of new simulations. |
+| `infodynamics.jar` | The JIDT library. |
+
+## Citation
+
+If you use this code, please cite the paper:
+
+```bibtex
+@article{Nguyen2025Feature,
+  title   = {Feature-based information-theoretic approach for detecting interpretable, long-timescale pairwise interactions from time series},
+  author  = {Nguyen, Aria and McMullin, Oscar and Lizier, Joseph T. and Fulcher, Ben D.},
+  journal = {Physical Review Research},
+  volume  = {7},
+  number  = {4},
+  pages   = {043283},
+  year    = {2025},
+  doi     = {10.1103/qnx2-yp4c}
+}
+```
+
+The code is archived on Zenodo: [10.5281/zenodo.17188607](https://doi.org/10.5281/zenodo.17188607).
