@@ -10,8 +10,9 @@ test_that("detect_dependency_with_catch22 uses its delay argument", {
 
   run <- function(delay) {
     set.seed(1)
-    suppressMessages(detect_dependency_with_catch22(x, y, feature_window = w, target_hist = 0,
-                                                    delay = delay, number_surrogates = 20))
+    # (few surrogates: only the MI values are compared, so the warning about p-value resolution is expected)
+    suppressWarnings(suppressMessages(detect_dependency_with_catch22(x, y, feature_window = w, target_hist = 0,
+                                                                     delay = delay, number_surrogates = 20)))
   }
   mi_delay1 <- run(1)
   mi_delay4 <- run(d)
