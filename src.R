@@ -365,7 +365,7 @@ detect_dependency_with_catch22 <- function(source,target,feature_window,target_h
                             k_tau=1,
                             l=1,
                             l_tau=1,
-                            delay=1,
+                            delay=delay,
                             number_surrogates=number_surrogates,
                             theiler_window_multiplier=theiler_window_multiplier,
                             rotating_surrogates=rotating_surrogates)
