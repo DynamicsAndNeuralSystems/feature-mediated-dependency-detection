@@ -27,6 +27,7 @@ It contains the code to apply the method to a pair of time series, and the code 
   - [Reproducing the figures](#reproducing-the-figures)
 - [Repository structure](#repository-structure)
 - [Citation](#citation)
+- [License](#license)
 
 ## Installation
 
@@ -213,3 +214,8 @@ If you use this code, please cite the paper:
 ```
 
 The code is archived on Zenodo: [10.5281/zenodo.17188607](https://doi.org/10.5281/zenodo.17188607).
+
+## License
+
+This code is released under the [GNU General Public License, version 3 or (at your option) any later version](LICENSE) (GPL-3.0-or-later).
+The bundled JIDT library (`infodynamics.jar`) is distributed under GPL-3.0.
